@@ -38,6 +38,7 @@ class MangaLivre :
     override val versionId: Int = 2
 
     override val client: OkHttpClient = network.client.newBuilder()
+        .addInterceptor(::cloudflareInterceptor)
         .addInterceptor(::clientHeaderInterceptor)
         .rateLimit(2, 1.seconds) { it.host == baseUrlHost }
         .build()
@@ -187,6 +188,20 @@ class MangaLivre :
     @Volatile
     private var cachedClientValue: String? = null
 
+    private fun cloudflareInterceptor(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        if (request.url.host != baseUrlHost) {
+            return chain.proceed(request)
+        }
+        val response = chain.proceed(request)
+        if (response.code != 403 && response.code != 503) {
+            return response
+        }
+        response.close()
+        CloudflareResolver.resolve(baseUrl, baseUrl, headers["User-Agent"])
+        return chain.proceed(request.newBuilder().build())
+    }
+
     private fun clientHeaderInterceptor(chain: Interceptor.Chain): Response {
         val request = chain.request()
         if (request.url.host != baseUrlHost) {
@@ -196,7 +211,7 @@ class MangaLivre :
         val response = chain.proceed(
             request.newBuilder().header(CLIENT_HEADER, currentClientValue()).build(),
         )
-        if (response.code != 403 || !response.isOfficialAppError()) {
+        if (response.code != 403) {
             return response
         }
 
@@ -236,19 +251,13 @@ class MangaLivre :
             .singleOrNull()
     }
 
-    private fun Response.isOfficialAppError(): Boolean = try {
-        peekBody(MAX_PEEK).string().contains("aplicativo oficial", ignoreCase = true)
-    } catch (_: Exception) {
-        false
-    }
-
     companion object {
         private const val ALTERNATIVE_TITLE_PREF = "alternativeTitlePref"
-        private const val CLIENT_HEADER = "x-toonlivre-client"
-        private const val DEFAULT_CLIENT = "web-x"
+        private const val CLIENT_HEADER = "X-Tly-Sec"
+        private const val DEFAULT_CLIENT = "web-z99"
         private const val MAX_PEEK = 1024L
         private val ASSET_REGEX = Regex("/assets/index-[\\w-]+\\.js")
-        private val ANCHORED_REGEX = Regex("\"x-toonlivre-client\"\\s*,\\s*\"([\\w.-]+)\"")
-        private val SHAPE_REGEX = Regex("\"(web-[a-z0-9]+)\"")
+        private val ANCHORED_REGEX = Regex("\"X-Tly-Sec\"\\s*,\\s*\"([\\w.-]+)\"")
+        private val SHAPE_REGEX = Regex("\"(web-[\\w.-]+)\"")
     }
 }
