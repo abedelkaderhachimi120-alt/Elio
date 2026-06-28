@@ -3,8 +3,8 @@ ext {
     extClass = '.AnyoneManga'
     themePkg = 'madara'
     baseUrl = 'https://anyonemanga.com'
-    overrideVersionCode = 2
-    isNsfw = false
+    overrideVersionCode = 3
+    isNsfw = false 
 }
 
 apply plugin: "kei.plugins.extension.legacy"
