@@ -5,11 +5,9 @@ plugins {
 keiyoushi {
     name = "CosmicScans.id"
     className = "CosmicScansID"
-    versionCode = 22
+    versionCode = 55
     contentWarning = ContentWarning.SAFE
     libVersion = "1.4"
-    theme = "mangathemesia"
-    baseUrl = "https://lc1.cosmicscans.to"
 }
 
 dependencies {
