@@ -3,7 +3,7 @@ ext {
     extClass = '.AnyoneManga'
     themePkg = 'madara'
     baseUrl = 'https://anyonemanga.com'
-    overrideVersionCode = 0
+    overrideVersionCode = 2
     isNsfw = false
 }
 
